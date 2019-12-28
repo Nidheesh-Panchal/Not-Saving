@@ -1,0 +1,4 @@
+<resources>
+	<string name="app_name">Not Saving</string>
+	<string name="service_name">YourService</string>
+</resources>
