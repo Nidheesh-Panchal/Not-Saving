@@ -10,6 +10,15 @@
 		android:supportsRtl="true"
 		android:theme="@style/AppTheme">
 
+		<receiver
+			android:name="Restarter"
+			android:enabled="true"
+			android:exported="true">
+			<intent-filter>
+				<action android:name="restartservice" />
+			</intent-filter>
+		</receiver>
+
 		<activity android:name=".MainActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -20,8 +29,11 @@
 
 		<service android:name=".NotService"
 			android:stopWithTask="false"
+			android:foregroundServiceType="dataSync"
+			android:enabled="true"
 			android:label="@string/app_name"
-			android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+			android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+			>
 			<intent-filter>
 				<action android:name="android.service.notification.NotificationListenerService"></action>
 			</intent-filter>
@@ -29,4 +41,5 @@
 	</application>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 </manifest>

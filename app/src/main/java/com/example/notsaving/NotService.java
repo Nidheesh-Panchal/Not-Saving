@@ -1,13 +1,20 @@
 package com.example.notsaving;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,9 +26,12 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class NotService extends NotificationListenerService {
 
+	int counter=0;
 	String filePath;
 	String fileName;
 	File f;
@@ -32,12 +42,92 @@ public class NotService extends NotificationListenerService {
 	{
 		super.onCreate();
 		Log.d("notsave","created service");
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O)
+			startMyOwnForeground();
+		else
+			startForeground(1, new Notification());
+	}
+
+	@RequiresApi(Build.VERSION_CODES.O)
+	private void startMyOwnForeground()
+	{
+		String NOTIFICATION_CHANNEL_ID = "example.permanence";
+		String channelName = "Background Service";
+		NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+		chan.setLightColor(Color.BLUE);
+		chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+
+		NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		assert manager != null;
+		manager.createNotificationChannel(chan);
+
+		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+		Notification notification = notificationBuilder.setOngoing(true)
+//				.setSmallIcon(R.mipmap.ic_launcher)
+				.setContentTitle("App is running in background")
+				.setPriority(NotificationManager.IMPORTANCE_MAX)
+				.setCategory(Notification.CATEGORY_SERVICE)
+				.build();
+		startForeground(2, notification);
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		super.onStartCommand(intent, flags, startId);
+		Log.d("notsave","onStartCommand");
+
+		startTimer();
+		Log.d("notsave","Timer started");
+		return START_STICKY;
 	}
 
 	@Override
 	public void onDestroy()
 	{
 		super.onDestroy();
+		Log.d("notsave","onDestroy");
+		stoptimertask();
+		Log.d("notsave","stopped timer");
+		restartservice();
+	}
+
+	private Timer timer;
+	private TimerTask timerTask;
+	public void startTimer() {
+		timer = new Timer();
+		timerTask = new TimerTask() {
+			@Override
+			public void run() {
+				Log.d("notsave","Scheduled");
+				restartservice();
+			}
+		};
+		/*{
+			public void run() {
+//				Log.d("notsave", "=========  "+ (counter++));
+				Intent broadcastIntent = new Intent();
+				broadcastIntent.setAction("restartservice");
+				broadcastIntent.setClass(mcontext, NotService.class);
+				this.sendBroadcast(broadcastIntent);
+			}
+
+		};*/
+		timer.schedule(timerTask, 300000, 300000); //
+	}
+
+	public void restartservice()
+	{
+		Intent broadcastIntent = new Intent();
+		broadcastIntent.setAction("restartservice");
+		broadcastIntent.setClass(this, Restarter.class);
+		this.sendBroadcast(broadcastIntent);
+	}
+
+	public void stoptimertask() {
+		if (timer != null) {
+			timer.cancel();
+			timer = null;
+		}
 	}
 
 	@Override
