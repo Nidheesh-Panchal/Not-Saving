@@ -31,21 +31,24 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		verifyStoragePermissions(this);
+//		verifyStoragePermissions(this);
 
 		noti_list=findViewById(R.id.noti_list);
 
 		String notificationListenerString = Settings.Secure.getString(this.getContentResolver(),"enabled_notification_listeners");
 		if (notificationListenerString == null || !notificationListenerString.contains(getPackageName())) {
-			Log.d("notsave", "no access");
+			Log.d("notsave", "Notification access: NO (Requesting permission)");
 			requestPermission();
 		}
 		else {
-			Log.d("notsave", "has access");
+			Log.d("notsave", "Notification access: YES");
 		}
 
+		Log.d("notsave","Starting service");
 		mYourService = new NotService();
+		Log.d("notsave","Starting intent");
 		mServiceIntent = new Intent(this, mYourService.getClass());
+		Log.d("notsave","Checking service status");
 		if (!isMyServiceRunning(mYourService.getClass())) {
 			startService(mServiceIntent);
 		}
@@ -95,11 +98,11 @@ public class MainActivity extends AppCompatActivity {
 		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
 		for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
 			if (serviceClass.getName().equals(service.service.getClassName())) {
-				Log.i ("Service status", "Running");
+				Log.d ("notsave", "Service running: YES");
 				return true;
 			}
 		}
-		Log.i ("Service status", "Not running");
+		Log.d ("notsave", "Service running: NO");
 		return false;
 	}
 

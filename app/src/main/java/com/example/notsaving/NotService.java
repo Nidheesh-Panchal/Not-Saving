@@ -23,11 +23,14 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class NotService extends NotificationListenerService {
 
@@ -35,23 +38,27 @@ public class NotService extends NotificationListenerService {
 	String filePath;
 	String fileName;
 	File f;
-	String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath()+"/NotSaving";
+//	String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath()+"/NotSaving";
+	String baseDir;
 
 	@Override
 	public void onCreate()
 	{
 		super.onCreate();
+		baseDir = getExternalFilesDir(null)+File.separator+"NotSaving";
+		startTimer();
+		Log.d("notsave","Timer started onCreate");
 		Log.d("notsave","created service");
 		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O)
 			startMyOwnForeground();
-		else
-			startForeground(1, new Notification());
+//		else
+//			startForeground(1, new Notification());
 	}
 
 	@RequiresApi(Build.VERSION_CODES.O)
 	private void startMyOwnForeground()
 	{
-		String NOTIFICATION_CHANNEL_ID = "example.permanence";
+		String NOTIFICATION_CHANNEL_ID = "example.notsaving";
 		String channelName = "Background Service";
 		NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
 		chan.setLightColor(Color.BLUE);
@@ -74,10 +81,12 @@ public class NotService extends NotificationListenerService {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
-		Log.d("notsave","onStartCommand");
-
 		startTimer();
-		Log.d("notsave","Timer started");
+		Log.d("notsave","Timer started onStartCommand");
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O)
+			startMyOwnForeground();
+//		else
+//			startForeground(1, new Notification());
 		return START_STICKY;
 	}
 
@@ -135,7 +144,7 @@ public class NotService extends NotificationListenerService {
 	{
 		Log.d("notsave","got notification");
 		String pakagename=sbn.getPackageName();
-//		Log.d("notsave",sbn.getPackageName());
+		Log.d("notsave",sbn.getPackageName());
 
 		if(pakagename.equals("com.whatsapp"))
 		{
@@ -156,24 +165,50 @@ public class NotService extends NotificationListenerService {
 
 			Bundle extras=sbn.getNotification().extras;
 			//ArrayList<String> noti=new ArrayList<>();
+
 			String title=extras.getCharSequence("android.title").toString();
 			String text=extras.getCharSequence("android.text").toString();
+			if(title.substring(0,8).equals("WhatsApp"))
+			{
+				return;
+			}
+
+			if(text.matches(".* messages from .* chats"))
+			{
+				return;
+			}
+
+			long millis = sbn.getNotification().when;
+
+			if(System.currentTimeMillis() - millis > 3000 ){
+				return;
+			}
+
+			Date date=new Date(millis);
+
+			SimpleDateFormat format=new SimpleDateFormat("hh:mm a");
+//			Date today= Calendar.getInstance().getTime();
+			String time = format.format(date);
+
+			Log.d("notsave","Time : " + time);
+
 			/*noti.add(title);
 			noti.add(text);*/
 
 			//Broadcast
-			Intent local = new Intent();
+			/*Intent local = new Intent();
 			local.setAction("com.example.notsaving");
 			local.putExtra("title",title);
 			local.putExtra("text",text);
-			this.sendBroadcast(local);
+			this.sendBroadcast(local);*/
 
 			f=new File(filePath,fileName);
 			try {
 				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(f,true)));
 				pw.println("");
-				pw.println("Title : "+title);
-				pw.println("Text : "+text);
+				pw.println("Title : " + title);
+				pw.println("Text : " + text);
+				pw.println("Time : " + time);
 				pw.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -202,22 +237,37 @@ public class NotService extends NotificationListenerService {
 			//ArrayList<String> noti=new ArrayList<>();
 			String title=extras.getCharSequence("android.title").toString();
 			String text=extras.getCharSequence("android.text").toString();
+
+			if(text.endsWith("liked your post."))
+			{
+				return;
+			}
+
+			long millis = sbn.getNotification().when;
+			Date date=new Date(millis);
+
+			SimpleDateFormat format=new SimpleDateFormat("hh:mm a");
+//			Date today= Calendar.getInstance().getTime();
+			String time = format.format(date);
+
+			Log.d("notsave","Time : " + time);
 			/*noti.add(title);
 			noti.add(text);*/
 
 			//Broadcast
-			Intent local = new Intent();
+			/*Intent local = new Intent();
 			local.setAction("com.example.notsaving");
 			local.putExtra("title",title);
 			local.putExtra("text",text);
-			this.sendBroadcast(local);
+			this.sendBroadcast(local);*/
 
 			f=new File(filePath,fileName);
 			try {
 				PrintWriter pw=new PrintWriter(new BufferedWriter(new FileWriter(f,true)));
 				pw.println("");
-				pw.println("Title : "+title);
-				pw.println("Text : "+text);
+				pw.println("Title : " + title);
+				pw.println("Text : " + text);
+				pw.println("Time : " + time);
 				pw.close();
 			} catch (IOException e) {
 				e.printStackTrace();
