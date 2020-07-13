@@ -1,5 +1,5 @@
 # Not-Saving
-Save notification of WhatsApp and Instagram in .txt file to look at it even if its been removed by the other person
+Save notification of WhatsApp and Instagram in .txt file to look at it even if the message is deleted by the sender.
 
 Further improvements possible:
 1. Mute notification for such apps for which you want to see notifications but don't want any sound.
